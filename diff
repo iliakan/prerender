@@ -1,0 +1,49 @@
+diff --git a/lib/browsers/chrome.js b/lib/browsers/chrome.js
+index 9625d0f..46487a1 100644
+--- a/lib/browsers/chrome.js
++++ b/lib/browsers/chrome.js
+@@ -171,7 +171,8 @@ chrome.setUpEvents = function(tab) {
+ 			Network,
+ 			Emulation,
+ 			Log,
+-			Console
++			Console,
++			Runtime
+ 		} = tab;
+ 
+ 		Promise.all([
+@@ -180,9 +181,20 @@ chrome.setUpEvents = function(tab) {
+ 			Security.enable(),
+ 			Network.enable(),
+ 			Log.enable(),
++      Runtime.enable(),
+ 			Console.enable()
+ 		]).then(() => {
+ 
++      Network.clearBrowserCache().then(() => console.log("CACHE CLEARED"), () => console.log("Do not support CACHE clear!"));
++
++      Runtime.consoleAPICalled((...args) => console.log(...args));
++
++      // Console.messageAdded((...args) => console.log(...args));
++
++      Runtime.exceptionThrown((params) => {
++        console.log('>', params);
++      })
++
+ 			//hold onto info that could be used later if saving a HAR file
+ 			tab.prerender.pageLoadInfo = {
+ 				url: tab.prerender.url,
+@@ -342,13 +354,6 @@ chrome.setUpEvents = function(tab) {
+ 				}
+ 			});
+ 
+-			Console.messageAdded((params) => {
+-				if (tab.prerender.logRequests || this.options.logRequests) {
+-					const message = params.message;
+-					util.log('level:', message.level, 'text:', message.text, 'url:', message.url, 'line:', message.line);
+-				}
+-			});
+-
+ 			Log.entryAdded((params) => {
+ 				if (tab.prerender.logRequests || this.options.logRequests) util.log(params.entry);
+ 			});
